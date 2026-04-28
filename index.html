@@ -1,0 +1,2327 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marsli — Web Developer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+/* ─── RESET ──────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ─── TOKENS ─────────────────────────────────── */
+:root {
+  --bg:       #03030a;
+  --bg2:      #07070f;
+  --bg3:      #0b0b15;
+  --surf:     #10101c;
+  --b1:       rgba(255,255,255,0.06);
+  --b2:       rgba(255,255,255,0.11);
+  --text:     #eeeef8;
+  --muted:    #7070a0;
+  --a:        #7c6fff;
+  --a2:       #c4b5fd;
+  --a3:       #38bdf8;
+  --glow:     rgba(124,111,255,0.28);
+  --red:      #ff4d6d;
+  --green:    #34d399;
+  --gold:     #f59e0b;
+  --r: 0deg;
+}
+
+/* ─── TYPOGRAPHY ──────────────────────────────── */
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  cursor: none;
+}
+[dir="rtl"] body, [lang="ar"] { font-family: 'Segoe UI', Tahoma, sans-serif; }
+
+/* ─── CUSTOM CURSOR ───────────────────────────── */
+#cur {
+  width: 8px; height: 8px;
+  background: #fff;
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 99999;
+  transition: width .25s, height .25s, background .25s;
+  transform: translate(-50%,-50%);
+  mix-blend-mode: difference;
+}
+#cur-ring {
+  width: 40px; height: 40px;
+  border: 1.5px solid rgba(124,111,255,0.7);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 99998;
+  transform: translate(-50%,-50%);
+  transition: width .4s cubic-bezier(.23,1,.32,1), height .4s cubic-bezier(.23,1,.32,1), border-color .3s, opacity .3s;
+}
+#cur-trail {
+  position: fixed;
+  pointer-events: none;
+  z-index: 99997;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+body.cur-hover #cur { width: 14px; height: 14px; }
+body.cur-hover #cur-ring { width: 60px; height: 60px; border-color: var(--a); }
+body.cur-link #cur { width: 50px; height: 50px; mix-blend-mode: normal; background: rgba(124,111,255,0.15); }
+body.cur-link #cur-ring { opacity: 0; }
+
+/* ─── SCROLLBAR ───────────────────────────────── */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--a); border-radius: 3px; }
+
+/* ─── PROGRESS BAR ────────────────────────────── */
+#progress {
+  position: fixed; top: 0; left: 0;
+  height: 2px; background: var(--a);
+  z-index: 9999; width: 0%;
+  transition: width .1s linear;
+  box-shadow: 0 0 12px var(--glow);
+}
+
+/* ─── NOISE ───────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 1; opacity: 1;
+}
+
+/* ─── LANGUAGE SWITCHER ───────────────────────── */
+#lang-bar {
+  display: flex; gap: 0.3rem;
+}
+.nav-right {
+  display: flex; align-items: center; gap: 1rem;
+}
+.lang-btn {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--b2);
+  border-radius: 2px;
+  background: rgba(3,3,10,0.8);
+  color: var(--muted);
+  cursor: none;
+  transition: all .2s;
+  backdrop-filter: blur(10px);
+}
+.lang-btn.active, .lang-btn:hover { border-color: var(--a); color: var(--a); }
+
+/* ─── NAV ─────────────────────────────────────── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.4rem 5rem;
+  z-index: 1000;
+  transition: all .4s;
+}
+nav.scrolled {
+  background: rgba(3,3,10,0.82);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--b1);
+  padding: 1rem 5rem;
+}
+.nav-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem;
+  letter-spacing: 0.15em;
+  color: var(--text);
+  text-decoration: none;
+  display: flex; align-items: center; gap: 0.1em;
+}
+.nav-logo-dot { color: var(--a); font-size: 2rem; line-height: 0.5; }
+.nav-links { display: flex; gap: 2.5rem; list-style: none; }
+.nav-links a {
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color .2s;
+  font-weight: 500;
+  position: relative;
+}
+.nav-links a::after {
+  content: '';
+  position: absolute; left: 0; bottom: -4px;
+  width: 0; height: 1px;
+  background: var(--a);
+  transition: width .3s;
+}
+.nav-links a:hover { color: var(--text); }
+.nav-links a:hover::after { width: 100%; }
+.nav-cta {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--a);
+  text-decoration: none;
+  border: 1px solid var(--a);
+  padding: 0.55rem 1.3rem;
+  border-radius: 2px;
+  transition: background .2s, color .2s, box-shadow .2s;
+  cursor: none;
+}
+.nav-cta:hover { background: var(--a); color: #fff; box-shadow: 0 0 30px var(--glow); }
+
+/* ─── HERO ────────────────────────────────────── */
+#hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 0 5rem;
+  position: relative; overflow: hidden;
+}
+
+/* Animated gradient mesh */
+.hero-mesh {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 70% 40%, rgba(124,111,255,0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 20% 70%, rgba(56,189,248,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 80% 80%, rgba(124,111,255,0.06) 0%, transparent 60%);
+  animation: meshPulse 12s ease-in-out infinite alternate;
+}
+@keyframes meshPulse {
+  0% { opacity: .8; }
+  100% { opacity: 1; filter: hue-rotate(15deg); }
+}
+
+/* Grid lines */
+.hero-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(124,111,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,111,255,0.04) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 20%, transparent 100%);
+}
+
+/* Floating particles */
+.hero-particles {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--a);
+  opacity: 0;
+  animation: particleFloat var(--dur) var(--delay) ease-in-out infinite;
+}
+@keyframes particleFloat {
+  0% { opacity: 0; transform: translateY(100vh) scale(0); }
+  10% { opacity: .6; }
+  90% { opacity: .2; }
+  100% { opacity: 0; transform: translateY(-20vh) scale(1.5); }
+}
+
+.hero-eyebrow {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--a);
+  margin-bottom: 1.6rem;
+  display: flex; align-items: center; gap: 1rem;
+  opacity: 0; animation: fadeUp .8s .3s forwards;
+}
+.hero-eyebrow-line {
+  display: block; width: 40px; height: 1px;
+  background: linear-gradient(to right, var(--a), transparent);
+}
+
+.hero-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(5rem, 14vw, 13rem);
+  line-height: 0.88;
+  letter-spacing: 0.04em;
+  margin-bottom: 1.8rem;
+  opacity: 0; animation: fadeUp .9s .5s forwards;
+}
+.hero-title .outline {
+  -webkit-text-stroke: 1px rgba(255,255,255,0.18);
+  color: transparent;
+}
+.hero-title .glow-word {
+  color: var(--a2);
+  text-shadow: 0 0 80px rgba(196,181,253,0.35);
+}
+
+.hero-desc {
+  font-size: 1.05rem;
+  color: var(--muted);
+  max-width: 480px;
+  line-height: 1.75;
+  margin-bottom: 2.8rem;
+  font-weight: 300;
+  opacity: 0; animation: fadeUp .9s .7s forwards;
+}
+.hero-actions {
+  display: flex; gap: 1rem; align-items: center;
+  opacity: 0; animation: fadeUp .9s .9s forwards;
+}
+.btn-p {
+  background: var(--a);
+  color: #fff;
+  padding: .9rem 2.2rem;
+  border-radius: 2px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  transition: transform .25s, box-shadow .25s;
+  border: none; cursor: none;
+  position: relative; overflow: hidden;
+}
+.btn-p::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%);
+  transform: translateX(-100%);
+  transition: transform .5s;
+}
+.btn-p:hover::before { transform: translateX(100%); }
+.btn-p:hover { transform: translateY(-3px); box-shadow: 0 16px 50px var(--glow); }
+.btn-g {
+  color: var(--muted);
+  padding: .9rem 2.2rem;
+  border-radius: 2px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  border: 1px solid var(--b2);
+  transition: border-color .2s, color .2s;
+  cursor: none;
+}
+.btn-g:hover { border-color: var(--a); color: var(--a); }
+
+/* Right side floating card */
+.hero-card {
+  position: absolute;
+  right: 5rem; top: 50%;
+  transform: translateY(-50%);
+  width: 280px;
+  background: var(--surf);
+  border: 1px solid var(--b2);
+  border-radius: 8px;
+  padding: 2rem;
+  opacity: 0; animation: fadeLeft 1s 1.1s forwards;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.5), 0 0 60px rgba(124,111,255,0.08);
+}
+.hero-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(to right, var(--a), var(--a3));
+  border-radius: 8px 8px 0 0;
+}
+.hc-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1.5rem;
+}
+.hc-stat { margin-bottom: 1.2rem; }
+.hc-stat-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.8rem;
+  line-height: 1;
+  color: var(--text);
+  letter-spacing: 0.05em;
+}
+.hc-stat-num span { color: var(--a); font-size: 1.8rem; }
+.hc-stat-lbl { font-size: 0.78rem; color: var(--muted); font-weight: 300; }
+.hc-divider { height: 1px; background: var(--b1); margin: 1rem 0; }
+.hc-avail {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.78rem; color: var(--green);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+}
+.avail-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+  flex-shrink: 0;
+}
+
+.hero-scroll {
+  position: absolute; bottom: 2.5rem; left: 50%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0; animation: fadeUp .8s 1.3s forwards;
+}
+.scroll-line {
+  width: 1px; height: 50px;
+  background: linear-gradient(to bottom, var(--a), transparent);
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+@keyframes scrollPulse { 0%,100% { opacity: .3; transform: scaleY(1); } 50% { opacity: 1; transform: scaleY(1.1); } }
+
+/* ─── MARQUEE ─────────────────────────────────── */
+.marquee-wrap {
+  overflow: hidden;
+  border-top: 1px solid var(--b1);
+  border-bottom: 1px solid var(--b1);
+  padding: 1rem 0;
+  background: var(--bg2);
+  position: relative; z-index: 2;
+}
+.marquee-track {
+  display: flex; gap: 3rem;
+  animation: marquee 25s linear infinite;
+  width: max-content;
+}
+.marquee-item {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+  white-space: nowrap;
+  display: flex; align-items: center; gap: 3rem;
+}
+.marquee-item span { color: var(--a); font-size: 0.6rem; }
+@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+/* ─── SECTION COMMONS ─────────────────────────── */
+section { padding: 8rem 5rem; position: relative; z-index: 2; }
+.eyebrow {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--a);
+  margin-bottom: 1rem;
+  display: flex; align-items: center; gap: 0.75rem;
+}
+.eyebrow::before {
+  content: '';
+  display: block; width: 24px; height: 1px;
+  background: var(--a);
+}
+.section-h {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  letter-spacing: 0.05em;
+  line-height: 1;
+  margin-bottom: 1rem;
+}
+.section-sub {
+  font-size: 1rem;
+  color: var(--muted);
+  max-width: 520px;
+  line-height: 1.75;
+  font-weight: 300;
+}
+.divider { height: 1px; background: linear-gradient(to right, transparent, var(--a), transparent); opacity: .15; }
+
+/* ─── ABOUT ───────────────────────────────────── */
+#about { background: var(--bg2); }
+.about-grid {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 6rem;
+  align-items: center;
+  margin-top: 4rem;
+}
+
+/* ID Card */
+.id-card {
+  aspect-ratio: 3/4;
+  border-radius: 12px;
+  background: #060610;
+  border: 1px solid var(--b2);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 60px 120px rgba(0,0,0,0.7), 0 0 80px rgba(124,111,255,0.1);
+}
+.id-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    conic-gradient(from 200deg at 25% 35%, rgba(124,111,255,0.25) 0deg, transparent 90deg),
+    conic-gradient(from 20deg at 80% 70%, rgba(56,189,248,0.15) 0deg, transparent 80deg);
+  animation: meshShift 12s ease-in-out infinite alternate;
+}
+@keyframes meshShift { 0% { opacity: .7; } 100% { opacity: 1; filter: hue-rotate(25deg); } }
+.id-card::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(124,111,255,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,111,255,0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 30%, transparent 100%);
+}
+.id-scan {
+  position: absolute; inset: 0; z-index: 3;
+  background: linear-gradient(to bottom, transparent 48%, rgba(124,111,255,0.06) 50%, transparent 52%);
+  background-size: 100% 10px;
+  animation: scanMove 5s linear infinite;
+  pointer-events: none;
+}
+@keyframes scanMove { 0% { background-position: 0 -200%; } 100% { background-position: 0 300%; } }
+.id-inner {
+  position: absolute; inset: 0; z-index: 4;
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  padding: 2.2rem;
+}
+.id-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.id-pill {
+  display: flex; align-items: center; gap: 0.4rem;
+  background: rgba(52,211,153,0.1);
+  border: 1px solid rgba(52,211,153,0.25);
+  border-radius: 50px;
+  padding: .3rem .8rem;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+.pill-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+.id-ref {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.52rem;
+  color: rgba(255,255,255,0.18);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.id-center {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; flex: 1; gap: 0.8rem;
+}
+.id-mono {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(5rem, 14vw, 8rem);
+  line-height: 1;
+  letter-spacing: 0.08em;
+  color: #fff;
+  text-shadow: 0 0 60px rgba(124,111,255,0.7), 0 0 120px rgba(124,111,255,0.3);
+  animation: glitch 7s steps(1) infinite;
+  position: relative;
+}
+.id-mono::before {
+  content: 'MA';
+  position: absolute; inset: 0;
+  color: var(--a2);
+  clip-path: polygon(0 38%, 100% 38%, 100% 52%, 0 52%);
+  transform: translateX(-4px);
+  opacity: 0;
+  animation: glitchSlice 7s steps(1) infinite;
+}
+@keyframes glitch {
+  0%,93%,96%,100% { transform: translate(0); }
+  94% { transform: translate(-3px, 1px); }
+  95% { transform: translate(3px, -1px); }
+}
+@keyframes glitchSlice {
+  0%,93%,96%,100% { opacity: 0; }
+  94%,95% { opacity: .8; transform: translateX(5px); }
+}
+.id-name-spaced {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.4em;
+  color: rgba(255,255,255,0.3);
+  text-transform: uppercase;
+}
+.id-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
+.id-role-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.52rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--a);
+  opacity: .7;
+  margin-bottom: .2rem;
+}
+.id-role-val { font-size: .9rem; font-weight: 600; }
+.id-year { font-family: 'Space Mono', monospace; font-size: 0.58rem; color: rgba(255,255,255,0.18); }
+.id-corner {
+  position: absolute; width: 20px; height: 20px;
+  border-color: rgba(124,111,255,0.6); border-style: solid; z-index: 5;
+}
+.tl { top: 10px; left: 10px; border-width: 1.5px 0 0 1.5px; }
+.tr { top: 10px; right: 10px; border-width: 1.5px 1.5px 0 0; }
+.bl { bottom: 10px; left: 10px; border-width: 0 0 1.5px 1.5px; }
+.br { bottom: 10px; right: 10px; border-width: 0 1.5px 1.5px 0; }
+
+.about-badge {
+  position: absolute; bottom: -1rem; right: -1rem;
+  background: var(--a);
+  color: #fff;
+  padding: .8rem 1.4rem;
+  border-radius: 2px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  box-shadow: 0 12px 40px var(--glow);
+}
+
+.about-text { display: flex; flex-direction: column; gap: 1.8rem; }
+.about-body {
+  font-size: 1.05rem; color: var(--muted); line-height: 1.85; font-weight: 300;
+}
+.about-body strong { color: var(--text); font-weight: 500; }
+
+.skills-wrap { margin-top: .5rem; }
+.skill-row {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  align-items: center;
+  gap: 1rem;
+  padding: .6rem 0;
+  border-bottom: 1px solid var(--b1);
+}
+.skill-name { font-size: .8rem; color: var(--muted); font-weight: 500; }
+.skill-bar-bg { height: 3px; background: var(--b1); border-radius: 3px; overflow: hidden; }
+.skill-bar {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(to right, var(--a), var(--a2));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 1s cubic-bezier(.22,1,.36,1);
+}
+.skill-bar.animated { transform: scaleX(1); }
+
+/* ─── SERVICES ────────────────────────────────── */
+#services { background: var(--bg); }
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  margin-top: 4rem;
+  background: var(--b1);
+  border: 1px solid var(--b1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.svc-card {
+  background: var(--bg2);
+  padding: 3rem 2.5rem;
+  position: relative; overflow: hidden;
+  transition: background .3s;
+}
+.svc-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(to right, var(--a), var(--a3));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .4s cubic-bezier(.22,1,.36,1);
+}
+.svc-card:hover { background: var(--bg3); }
+.svc-card:hover::before { transform: scaleX(1); }
+.svc-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 4rem;
+  color: rgba(124,111,255,0.08);
+  line-height: 1;
+  margin-bottom: 1rem;
+  transition: color .3s;
+}
+.svc-card:hover .svc-num { color: rgba(124,111,255,0.18); }
+.svc-icon { font-size: 2.2rem; margin-bottom: 1.2rem; display: block; }
+.svc-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 0.06em; margin-bottom: .8rem; }
+.svc-desc { font-size: .9rem; color: var(--muted); line-height: 1.75; font-weight: 300; }
+.svc-tags { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1.5rem; }
+.stag {
+  font-family: 'Space Mono', monospace;
+  font-size: .62rem;
+  padding: .25rem .65rem;
+  background: rgba(124,111,255,0.1);
+  color: var(--a2);
+  border-radius: 2px;
+  letter-spacing: .04em;
+}
+
+/* ─── WORK ────────────────────────────────────── */
+#work { background: var(--bg2); }
+.work-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5px;
+  margin-top: 4rem;
+  background: var(--b1);
+  border: 1px solid var(--b1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.proj-card {
+  background: var(--bg3);
+  position: relative; overflow: hidden;
+  aspect-ratio: 16/10;
+  cursor: none;
+  group: true;
+}
+.proj-card:nth-child(1) { grid-column: span 2; aspect-ratio: 21/9; }
+.proj-bg {
+  position: absolute; inset: 0;
+  transition: transform .6s cubic-bezier(.22,1,.36,1);
+}
+.proj-card:hover .proj-bg { transform: scale(1.06); }
+.bg1 { background: linear-gradient(135deg, #080815, #14103a, #0c1828); }
+.bg2 { background: linear-gradient(135deg, #08150a, #0f2812); }
+.bg3 { background: linear-gradient(135deg, #150808, #2a1020, #180820); }
+.bg4 { background: linear-gradient(135deg, #0c0c1a, #16102a); }
+.proj-deco { position: absolute; inset: 0; pointer-events: none; }
+.proj-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 50%, transparent 100%);
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 2.5rem;
+  transform: translateY(10px);
+  transition: transform .4s cubic-bezier(.22,1,.36,1);
+}
+.proj-card:hover .proj-overlay { transform: translateY(0); }
+.proj-type {
+  font-family: 'Space Mono', monospace;
+  font-size: .62rem;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--a2);
+  margin-bottom: .4rem;
+}
+.proj-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.8rem;
+  letter-spacing: .06em;
+  margin-bottom: .5rem;
+}
+.proj-desc { font-size: .85rem; color: rgba(255,255,255,.6); line-height: 1.6; margin-bottom: 1rem; font-weight: 300; }
+.proj-link {
+  font-family: 'Space Mono', monospace;
+  font-size: .68rem;
+  letter-spacing: .1em;
+  color: var(--a);
+  text-decoration: none;
+  display: flex; align-items: center; gap: .5rem;
+  opacity: 0; transform: translateY(6px);
+  transition: opacity .35s, transform .35s;
+}
+.proj-card:hover .proj-link { opacity: 1; transform: translateY(0); }
+
+/* ─── PROCESS ─────────────────────────────────── */
+#process { background: var(--bg); }
+.process-list { margin-top: 4rem; }
+.proc-item {
+  display: grid;
+  grid-template-columns: 100px 1px 1fr;
+  gap: 0 2.5rem;
+  padding: 3rem 0;
+  border-bottom: 1px solid var(--b1);
+  transition: background .2s;
+  position: relative;
+}
+.proc-item:first-child { border-top: 1px solid var(--b1); }
+.proc-item::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; right: 0;
+  background: rgba(124,111,255,0.02);
+  opacity: 0;
+  transition: opacity .3s;
+}
+.proc-item:hover::before { opacity: 1; }
+.proc-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 3.5rem;
+  letter-spacing: .05em;
+  color: var(--a);
+  opacity: .2;
+  line-height: 1;
+  transition: opacity .3s;
+  padding-top: .3rem;
+}
+.proc-item:hover .proc-num { opacity: .5; }
+.proc-line { background: var(--b2); width: 1px; }
+.proc-content { padding-left: 1rem; }
+.proc-title { font-size: 1.15rem; font-weight: 600; margin-bottom: .6rem; letter-spacing: -.01em; }
+.proc-desc { font-size: .9rem; color: var(--muted); line-height: 1.8; max-width: 560px; font-weight: 300; }
+
+/* ─── TESTIMONIALS ────────────────────────────── */
+#testimonials { background: var(--bg2); }
+.testi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  margin-top: 4rem;
+  background: var(--b1);
+  border: 1px solid var(--b1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.testi-card {
+  background: var(--bg3);
+  padding: 2.5rem;
+  transition: background .3s;
+  position: relative;
+}
+.testi-card:hover { background: var(--surf); }
+.testi-stars { color: var(--gold); font-size: .85rem; letter-spacing: .1em; margin-bottom: 1.4rem; }
+.testi-quote {
+  font-size: .95rem; color: var(--muted); line-height: 1.85;
+  margin-bottom: 2rem; font-style: italic; font-weight: 300;
+}
+.testi-quote::before { content: '"'; color: var(--a); font-size: 3rem; line-height: 0; vertical-align: -.4em; margin-right: .2rem; font-style: normal; }
+.testi-author { display: flex; align-items: center; gap: .85rem; }
+.testi-av {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--a);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: .75rem; color: #fff;
+  flex-shrink: 0;
+}
+.testi-name { font-size: .88rem; font-weight: 600; }
+.testi-role { font-size: .72rem; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+/* ─── CONTACT ─────────────────────────────────── */
+#contact { background: var(--bg); }
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 6rem;
+  margin-top: 4rem;
+  align-items: start;
+}
+.contact-info { display: flex; flex-direction: column; gap: 2.2rem; }
+.contact-avail {
+  display: flex; align-items: center; gap: .7rem;
+  font-size: .82rem; color: var(--green);
+  font-family: 'Space Mono', monospace;
+  font-size: .65rem; letter-spacing: .1em;
+}
+.c-item { display: flex; flex-direction: column; gap: .3rem; }
+.c-label {
+  font-family: 'Space Mono', monospace;
+  font-size: .62rem; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--a);
+}
+.c-val {
+  font-size: 1.05rem; font-weight: 500; color: var(--text);
+  text-decoration: none; transition: color .2s;
+}
+.c-val:hover { color: var(--a2); }
+.c-note {
+  padding: 1.5rem;
+  background: var(--surf);
+  border: 1px solid var(--b2);
+  border-radius: 4px;
+  border-left: 3px solid var(--a);
+}
+.c-note-title {
+  font-family: 'Space Mono', monospace;
+  font-size: .62rem; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--a);
+  margin-bottom: .4rem;
+}
+.c-note-body { font-size: .88rem; color: var(--muted); line-height: 1.7; font-weight: 300; }
+.c-note-body strong { color: var(--text); font-weight: 500; }
+
+/* Form */
+.contact-form { display: flex; flex-direction: column; gap: 1.4rem; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.form-group { display: flex; flex-direction: column; gap: .5rem; }
+.form-label {
+  font-family: 'Space Mono', monospace;
+  font-size: .62rem; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--muted);
+}
+.form-input, .form-textarea, .form-select {
+  background: var(--surf);
+  border: 1px solid var(--b2);
+  border-radius: 3px;
+  padding: .9rem 1rem;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: .92rem;
+  transition: border-color .2s, box-shadow .2s;
+  outline: none;
+  width: 100%;
+}
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+  border-color: var(--a);
+  box-shadow: 0 0 0 3px rgba(124,111,255,0.15);
+}
+.form-textarea { resize: vertical; min-height: 130px; font-weight: 300; }
+.form-select { appearance: none; cursor: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237070a0' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; padding-right: 2.5rem; }
+.btn-submit {
+  background: var(--a);
+  color: #fff;
+  border: none;
+  padding: 1.1rem 2rem;
+  border-radius: 3px;
+  font-family: 'Space Mono', monospace;
+  font-size: .78rem;
+  letter-spacing: .08em;
+  cursor: none;
+  transition: transform .25s, box-shadow .25s;
+  width: 100%;
+  position: relative; overflow: hidden;
+}
+.btn-submit::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.12) 50%, transparent 70%);
+  transform: translateX(-100%);
+  transition: transform .5s;
+}
+.btn-submit:hover::before { transform: translateX(100%); }
+.btn-submit:hover { transform: translateY(-2px); box-shadow: 0 14px 50px var(--glow); }
+
+/* ─── FOOTER ──────────────────────────────────── */
+footer {
+  padding: 3rem 5rem;
+  border-top: 1px solid var(--b1);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--bg);
+  position: relative; z-index: 2;
+}
+.footer-left {
+  font-family: 'Space Mono', monospace;
+  font-size: .72rem; color: var(--muted);
+}
+.footer-left strong { color: var(--a); font-weight: 400; }
+.footer-links { display: flex; gap: 2rem; }
+.footer-links a {
+  font-size: .72rem;
+  font-family: 'Space Mono', monospace;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: .06em;
+  transition: color .2s;
+}
+.footer-links a:hover { color: var(--a); }
+
+/* ─── MODAL ───────────────────────────────────── */
+#hire-modal {
+  display: none; position: fixed; inset: 0;
+  z-index: 99990;
+  background: rgba(0,0,0,0.88);
+  backdrop-filter: blur(12px);
+  align-items: center; justify-content: center;
+}
+#hire-modal.open { display: flex; }
+.modal-box {
+  background: var(--bg2);
+  border: 1px solid var(--b2);
+  border-radius: 8px;
+  padding: 3rem;
+  max-width: 500px; width: 90%;
+  position: relative;
+  animation: modalIn .35s cubic-bezier(.22,1,.36,1);
+}
+.modal-box::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(to right, var(--a), var(--a3));
+  border-radius: 8px 8px 0 0;
+}
+@keyframes modalIn { from { opacity: 0; transform: translateY(20px) scale(.96); } to { opacity: 1; transform: none; } }
+.modal-close {
+  position: absolute; top: 1.2rem; right: 1.2rem;
+  background: none; border: none;
+  color: var(--muted); font-size: 1.1rem;
+  cursor: none; transition: color .2s;
+}
+.modal-close:hover { color: var(--text); }
+.modal-eyebrow {
+  font-family: 'Space Mono', monospace;
+  font-size: .62rem; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--a);
+  margin-bottom: .75rem;
+}
+.modal-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.4rem; letter-spacing: .06em;
+  margin-bottom: .5rem;
+}
+.modal-sub { font-size: .9rem; color: var(--muted); line-height: 1.7; margin-bottom: 2rem; font-weight: 300; }
+.modal-options { display: flex; flex-direction: column; gap: .85rem; }
+.modal-opt {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1.1rem 1.4rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-family: 'Space Mono', monospace;
+  font-size: .78rem; letter-spacing: .05em;
+  transition: transform .2s, box-shadow .2s;
+  cursor: none;
+}
+.modal-opt-primary { background: var(--a); color: #fff; }
+.modal-opt-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 40px var(--glow); }
+.modal-opt-ghost {
+  background: var(--surf); color: var(--text);
+  border: 1px solid var(--b2);
+}
+.modal-opt-ghost:hover { border-color: var(--a); }
+.modal-footer-link {
+  text-align: center; margin-top: .5rem;
+  font-family: 'Space Mono', monospace;
+  font-size: .68rem; color: var(--muted);
+  text-decoration: none; letter-spacing: .1em;
+  transition: color .2s;
+}
+.modal-footer-link:hover { color: var(--a); }
+
+/* ─── ANIMATIONS ──────────────────────────────── */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: none; } }
+@keyframes fadeLeft { from { opacity: 0; transform: translate(30px, -50%); } to { opacity: 1; transform: translate(0, -50%); } }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(52,211,153,.5); } 50% { box-shadow: 0 0 0 6px rgba(52,211,153,0); } }
+.fade-up {
+  opacity: 0; transform: translateY(40px);
+  transition: opacity .8s cubic-bezier(.22,1,.36,1), transform .8s cubic-bezier(.22,1,.36,1);
+}
+.fade-up.visible { opacity: 1; transform: none; }
+.slide-left {
+  opacity: 0; transform: translateX(-30px);
+  transition: opacity .8s cubic-bezier(.22,1,.36,1), transform .8s cubic-bezier(.22,1,.36,1);
+}
+.slide-left.visible { opacity: 1; transform: none; }
+
+/* ─── RESPONSIVE ──────────────────────────────── */
+@media (max-width: 1100px) {
+  .about-grid { grid-template-columns: 1fr; gap: 3rem; }
+  .about-grid .about-text { order: 1; }
+  .about-grid .about-avatar-wrap { order: 2; max-width: 380px; margin: 0 auto; width: 100%; }
+  .id-card { aspect-ratio: 4/3; }
+  .hero-card { display: none; }
+  .hero-title { font-size: clamp(4rem, 14vw, 8rem); }
+}
+@media (max-width: 900px) {
+  nav { padding: 1rem 1.5rem; }
+  nav.scrolled { padding: .85rem 1.5rem; }
+  .nav-links { display: none; }
+  section { padding: 5rem 1.5rem; }
+  #hero { padding: 0 1.5rem; }
+  .services-grid, .testi-grid { grid-template-columns: 1fr; }
+  .work-grid { grid-template-columns: 1fr; }
+  .proj-card:nth-child(1) { grid-column: span 1; aspect-ratio: 16/10; }
+  .contact-grid { grid-template-columns: 1fr; gap: 3rem; }
+  footer { flex-direction: column; gap: 1.5rem; text-align: center; padding: 2rem 1.5rem; }
+  .hero-scroll { display: none; }
+  #lang-bar { right: .75rem; }
+  .proc-item { grid-template-columns: 60px 1px 1fr; gap: 0 1rem; }
+}
+
+/* ─── RTL ─────────────────────────────────────── */
+[dir="rtl"] .eyebrow::before { display: none; }
+[dir="rtl"] .eyebrow::after {
+  content: '';
+  display: block; width: 24px; height: 1px;
+  background: var(--a);
+}
+[dir="rtl"] .hero-eyebrow-line { background: linear-gradient(to left, var(--a), transparent); }
+[dir="rtl"] nav { flex-direction: row-reverse; }
+[dir="rtl"] .nav-right { flex-direction: row-reverse; }
+[dir="rtl"] .nav-logo { flex-direction: row-reverse; }
+[dir="rtl"] .footer-links { flex-direction: row-reverse; }
+
+/* ─── CONTENT TRANSLATION HELPERS ────────────────── */
+.t { display: none; }
+.t.active { display: inline; }
+.tb { display: none; }
+.tb.active { display: block; }
+.ti { display: none; }
+.ti.active { display: inline-block; }
+
+/* ═══════════════════════════════════════════════════
+   ✦ SPECTACULAR ANIMATIONS — UNIQUE EDITION ✦
+═══════════════════════════════════════════════════ */
+
+/* ─── AURORA BACKGROUND ────────────────────────── */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 120% 60% at -10% 20%, rgba(124,111,255,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 80% at 110% 80%, rgba(56,189,248,0.05) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 50% 110%, rgba(196,181,253,0.06) 0%, transparent 50%);
+  pointer-events: none; z-index: 0;
+  animation: auroraDrift 18s ease-in-out infinite alternate;
+}
+@keyframes auroraDrift {
+  0%   { transform: translateX(0) translateY(0) scale(1); opacity: .7; }
+  33%  { transform: translateX(3%) translateY(-2%) scale(1.02); opacity: 1; }
+  66%  { transform: translateX(-2%) translateY(1%) scale(0.98); opacity: .8; }
+  100% { transform: translateX(1%) translateY(3%) scale(1.01); opacity: 1; }
+}
+
+/* ─── NAV GLOW ON SCROLL ───────────────────────── */
+nav.scrolled .nav-logo { text-shadow: 0 0 30px rgba(124,111,255,0.5); }
+
+/* ─── MAGNETIC HERO TITLE ──────────────────────── */
+.hero-title {
+  transition: transform 0.1s ease-out;
+}
+
+/* ─── SPLIT TEXT CHARS ─────────────────────────── */
+.char {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(60px) rotateX(-40deg);
+  animation: charReveal 0.7s cubic-bezier(.22,1,.36,1) forwards;
+}
+@keyframes charReveal {
+  to { opacity: 1; transform: translateY(0) rotateX(0deg); }
+}
+
+/* ─── HERO TITLE SHIMMER ───────────────────────── */
+.hero-title .glow-word {
+  background: linear-gradient(90deg, var(--a2) 0%, #fff 40%, var(--a3) 60%, var(--a2) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: fadeUp .9s .5s forwards, shimmerText 4s 1.5s linear infinite;
+  opacity: 0;
+}
+@keyframes shimmerText {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ─── 3D TILT CARDS ────────────────────────────── */
+.svc-card, .testi-card, .proj-card {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.svc-card { transition: background .3s, transform 0.18s ease-out, box-shadow 0.18s ease-out; }
+.svc-card:hover {
+  box-shadow: 0 30px 80px rgba(124,111,255,0.15), 0 0 0 1px rgba(124,111,255,0.2);
+  background: var(--bg3);
+}
+
+/* ─── FLOATING ORBS ────────────────────────────── */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(80px);
+  animation: orbFloat var(--orb-dur, 20s) ease-in-out infinite alternate;
+}
+.orb-1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(124,111,255,0.08) 0%, transparent 70%);
+  top: -200px; right: -200px;
+  --orb-dur: 22s;
+  animation-name: orbFloat1;
+}
+.orb-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(56,189,248,0.06) 0%, transparent 70%);
+  bottom: 10%; left: -150px;
+  --orb-dur: 28s;
+  animation-name: orbFloat2;
+}
+@keyframes orbFloat1 {
+  0%   { transform: translate(0,0) scale(1); }
+  50%  { transform: translate(-60px, 80px) scale(1.1); }
+  100% { transform: translate(40px, -60px) scale(0.95); }
+}
+@keyframes orbFloat2 {
+  0%   { transform: translate(0,0) scale(1); }
+  50%  { transform: translate(80px,-40px) scale(1.08); }
+  100% { transform: translate(-30px,60px) scale(0.92); }
+}
+
+/* ─── CURSOR SPARKLE ───────────────────────────── */
+.sparkle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 99996;
+  border-radius: 50%;
+  background: var(--a2);
+  animation: sparkleAnim 0.7s ease-out forwards;
+}
+@keyframes sparkleAnim {
+  0%   { opacity: 1; transform: scale(1) translate(0,0); }
+  100% { opacity: 0; transform: scale(0) translate(var(--sx), var(--sy)); }
+}
+
+/* ─── SECTION REVEAL — CLIP PATH ───────────────── */
+.reveal-clip {
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 0.9s cubic-bezier(.22,1,.36,1);
+}
+.reveal-clip.visible { clip-path: inset(0 0 0% 0); }
+
+/* ─── PROC ITEM HOVER GLOW LINE ─────────────────── */
+.proc-item::after {
+  content: '';
+  position: absolute; left: 0; top: 50%; width: 3px; height: 0;
+  background: linear-gradient(to bottom, var(--a), var(--a3));
+  transform: translateY(-50%);
+  transition: height 0.4s cubic-bezier(.22,1,.36,1);
+  border-radius: 3px;
+}
+.proc-item:hover::after { height: 60%; }
+
+/* ─── CONTACT FORM INPUTS GLOW ──────────────────── */
+.form-input:focus {
+  animation: inputGlow 0.3s ease forwards;
+}
+@keyframes inputGlow {
+  to { box-shadow: 0 0 0 2px rgba(124,111,255,0.3), 0 0 20px rgba(124,111,255,0.1); }
+}
+
+/* ─── BUTTON RIPPLE ────────────────────────────── */
+.btn-p { overflow: hidden; }
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  transform: scale(0);
+  animation: rippleAnim 0.6s linear;
+  pointer-events: none;
+}
+@keyframes rippleAnim {
+  to { transform: scale(4); opacity: 0; }
+}
+
+/* ─── MARQUEE HOVER PAUSE ───────────────────────── */
+.marquee-wrap:hover .marquee-track { animation-play-state: paused; }
+
+/* ─── NAV CTA PULSE ─────────────────────────────── */
+@keyframes ctaPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124,111,255,0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(124,111,255,0); }
+}
+.nav-cta { animation: ctaPulse 3s ease-in-out infinite; }
+.nav-cta:hover { animation: none; }
+
+/* ─── HERO EYEBROW TYPEWRITER LINE ─────────────── */
+.hero-eyebrow-line {
+  animation: lineGrow 1.2s cubic-bezier(.22,1,.36,1) .3s both;
+}
+@keyframes lineGrow {
+  from { width: 0; }
+  to   { width: 40px; }
+}
+
+/* ─── HERO CARD FLOAT ───────────────────────────── */
+.hero-card {
+  animation: fadeLeft 1s 1.1s forwards, heroCardFloat 6s 2.1s ease-in-out infinite;
+}
+@keyframes heroCardFloat {
+  0%,100% { transform: translateY(-50%) translateY(0); }
+  50%      { transform: translateY(-50%) translateY(-12px); }
+}
+
+/* ─── AVAIL DOT EXPANDING RING ──────────────────── */
+.avail-dot::after {
+  content: '';
+  position: absolute;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--green);
+  animation: ringExpand 2s ease-out infinite;
+}
+.avail-dot { position: relative; }
+@keyframes ringExpand {
+  0%   { transform: scale(1); opacity: .8; }
+  100% { transform: scale(3); opacity: 0; }
+}
+
+/* ─── SCROLL INDICATOR ANIMATED MOUSE ──────────── */
+.hero-scroll::before {
+  content: '';
+  display: block;
+  width: 20px; height: 32px;
+  border: 1.5px solid rgba(124,111,255,0.4);
+  border-radius: 10px;
+  position: relative;
+  margin: 0 auto 0.4rem;
+}
+.hero-scroll::after {
+  content: '';
+  display: block;
+  width: 3px; height: 6px;
+  background: var(--a);
+  border-radius: 3px;
+  position: absolute;
+  left: 50%; top: 8px;
+  transform: translateX(-50%);
+  animation: mouseScroll 2s ease-in-out infinite;
+}
+@keyframes mouseScroll {
+  0%,100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  50%      { opacity: .2; transform: translateX(-50%) translateY(10px); }
+}
+
+/* ─── STAGGER FADE ──────────────────────────────── */
+.fade-up {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s cubic-bezier(.22,1,.36,1), transform 0.7s cubic-bezier(.22,1,.36,1);
+}
+.fade-up.visible { opacity: 1; transform: translateY(0); }
+
+/* ─── SLIDE LEFT ────────────────────────────────── */
+.slide-left {
+  opacity: 0;
+  transform: translateX(-30px);
+  transition: opacity 0.7s cubic-bezier(.22,1,.36,1), transform 0.7s cubic-bezier(.22,1,.36,1);
+}
+.slide-left.visible { opacity: 1; transform: translateX(0); }
+
+/* ─── SECTION NUMBERS COUNTER ───────────────────── */
+.hc-stat-num {
+  animation: countUp 2s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── ID CARD HOLOGRAPHIC SHINE ─────────────────── */
+.id-card {
+  transition: transform 0.2s ease-out;
+}
+.id-card:hover {
+  transform: perspective(800px) rotateY(-5deg) rotateX(3deg) scale(1.02);
+}
+
+/* ─── TESTIMONIAL QUOTE MARK ANIMATE ─────────────── */
+.testi-card:hover .testi-quote::before {
+  color: var(--a2);
+  text-shadow: 0 0 20px rgba(196,181,253,0.5);
+  transition: all 0.3s;
+}
+
+/* ─── FOOTER LINK UNDERLINE ANIMATE ─────────────── */
+.footer-links a {
+  position: relative;
+}
+.footer-links a::after {
+  content: '';
+  position: absolute; left: 0; bottom: -2px;
+  width: 0; height: 1px;
+  background: var(--a);
+  transition: width 0.3s cubic-bezier(.22,1,.36,1);
+}
+.footer-links a:hover::after { width: 100%; }
+
+/* ─── PAGE ENTRY WIPE ───────────────────────────── */
+#page-wipe {
+  position: fixed; inset: 0;
+  background: var(--a);
+  z-index: 999999;
+  transform-origin: top;
+  animation: pageWipe 1s cubic-bezier(.77,0,.18,1) 0.1s forwards;
+}
+@keyframes pageWipe {
+  0%   { transform: scaleY(1); }
+  100% { transform: scaleY(0); }
+}
+
+</style>
+</head>
+<body>
+
+<!-- PAGE WIPE ENTRY -->
+<div id="page-wipe"></div>
+
+<!-- FLOATING ORBS -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<!-- CURSOR -->
+<div id="cur"></div>
+<div id="cur-ring"></div>
+<canvas id="cur-trail"></canvas>
+
+<!-- SCROLL PROGRESS -->
+<div id="progress"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="nav-logo">MARSLI<span class="nav-logo-dot">·</span></a>
+  <ul class="nav-links">
+    <li><a href="#about"><span class="t t-en active">About</span><span class="t t-fr">À propos</span><span class="t t-ar">عني</span></a></li>
+    <li><a href="#services"><span class="t t-en active">Services</span><span class="t t-fr">Services</span><span class="t t-ar">خدمات</span></a></li>
+    <li><a href="#work"><span class="t t-en active">Work</span><span class="t t-fr">Projets</span><span class="t t-ar">أعمال</span></a></li>
+    <li><a href="#process"><span class="t t-en active">Process</span><span class="t t-fr">Processus</span><span class="t t-ar">منهجية</span></a></li>
+    <li><a href="#contact"><span class="t t-en active">Contact</span><span class="t t-fr">Contact</span><span class="t t-ar">تواصل</span></a></li>
+  </ul>
+  <div class="nav-right">
+    <div id="lang-bar">
+      <button class="lang-btn active" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('fr')">FR</button>
+      <button class="lang-btn" onclick="setLang('ar')">AR</button>
+    </div>
+    <a href="#" class="nav-cta" onclick="openHireModal(event)">
+      <span class="t t-en active">Hire Me</span>
+      <span class="t t-fr">Me recruter</span>
+      <span class="t t-ar">وظّفني</span>
+    </a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-mesh"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-particles" id="particles"></div>
+
+  <div class="hero-eyebrow">
+    <span class="hero-eyebrow-line"></span>
+    <span class="t t-en active">Available for new projects</span>
+    <span class="t t-fr">Disponible pour de nouveaux projets</span>
+    <span class="t t-ar">متاح للمشاريع الجديدة</span>
+  </div>
+
+  <h1 class="hero-title">
+    <span class="t t-en active">MARSLI<br><span class="outline">WEB</span><br><span class="glow-word">DEVELOPER</span></span>
+    <span class="t t-fr">MARSLI<br><span class="outline">DÉVEL.</span><br><span class="glow-word">WEB</span></span>
+    <span class="t t-ar">مارسلي<br><span class="outline">مطوّر</span><br><span class="glow-word">ويب</span></span>
+  </h1>
+
+  <p class="hero-desc">
+    <span class="t t-en active">I craft modern, clean websites and digital experiences that make brands unforgettable. From landing pages to full-stack apps — precision in every pixel.</span>
+    <span class="t t-fr">Je crée des sites web modernes et des expériences digitales inoubliables — des landing pages aux applications full-stack.</span>
+    <span class="t t-ar">أصمّم مواقع ويب حديثة وتجارب رقمية لا تُنسى — من الصفحات المقصودة إلى التطبيقات الكاملة.</span>
+  </p>
+
+  <div class="hero-actions">
+    <a href="#work" class="btn-p">
+      <span class="t t-en active">View My Work</span>
+      <span class="t t-fr">Voir mes projets</span>
+      <span class="t t-ar">مشاهدة أعمالي</span>
+    </a>
+    <a href="#contact" class="btn-g">
+      <span class="t t-en active">Let's Talk</span>
+      <span class="t t-fr">Discutons</span>
+      <span class="t t-ar">لنتحدث</span>
+    </a>
+  </div>
+
+  <!-- Floating stats card -->
+  <div class="hero-card">
+    <div class="hc-label">
+      <span class="t t-en active">Stats overview</span>
+      <span class="t t-fr">Aperçu</span>
+      <span class="t t-ar">إحصائيات</span>
+    </div>
+    <div class="hc-stat">
+      <div class="hc-stat-num">20<span>+</span></div>
+      <div class="hc-stat-lbl"><span class="t t-en active">Projects completed</span><span class="t t-fr">Projets réalisés</span><span class="t t-ar">مشروع منجز</span></div>
+    </div>
+    <div class="hc-divider"></div>
+    <div class="hc-stat">
+      <div class="hc-stat-num">3<span>+</span></div>
+      <div class="hc-stat-lbl"><span class="t t-en active">Years of experience</span><span class="t t-fr">Ans d'expérience</span><span class="t t-ar">سنوات خبرة</span></div>
+    </div>
+    <div class="hc-divider"></div>
+    <div class="hc-stat">
+      <div class="hc-stat-num">100<span>%</span></div>
+      <div class="hc-stat-lbl"><span class="t t-en active">Client satisfaction</span><span class="t t-fr">Satisfaction client</span><span class="t t-ar">رضا العملاء</span></div>
+    </div>
+    <div class="hc-divider"></div>
+    <div class="hc-avail"><div class="avail-dot"></div><span class="t t-en active">Available now</span><span class="t t-fr">Disponible</span><span class="t t-ar">متاح الآن</span></div>
+  </div>
+
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    <span class="t t-en active">scroll</span><span class="t t-fr">défiler</span><span class="t t-ar">انزل</span>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee-track" id="marquee">
+    <div class="marquee-item">REACT <span>✦</span> NEXT.JS <span>✦</span> NODE.JS <span>✦</span> FIGMA <span>✦</span> TAILWIND <span>✦</span> TYPESCRIPT <span>✦</span> GSAP <span>✦</span> SUPABASE <span>✦</span> WEBGL <span>✦</span> FRAMER MOTION <span>✦</span></div>
+    <div class="marquee-item">REACT <span>✦</span> NEXT.JS <span>✦</span> NODE.JS <span>✦</span> FIGMA <span>✦</span> TAILWIND <span>✦</span> TYPESCRIPT <span>✦</span> GSAP <span>✦</span> SUPABASE <span>✦</span> WEBGL <span>✦</span> FRAMER MOTION <span>✦</span></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="eyebrow">
+    <span class="t t-en active">About me</span>
+    <span class="t t-fr">À propos</span>
+    <span class="t t-ar">عني</span>
+  </div>
+  <h2 class="section-h fade-up">
+    <span class="t t-en active">THE MIND<br>BEHIND THE CODE</span>
+    <span class="t t-fr">L'ESPRIT<br>DERRIÈRE LE CODE</span>
+    <span class="t t-ar">العقل<br>خلف الكود</span>
+  </h2>
+
+  <div class="about-grid">
+    <div class="about-avatar-wrap fade-up">
+      <div class="id-card">
+        <div class="id-corner tl"></div>
+        <div class="id-corner tr"></div>
+        <div class="id-corner bl"></div>
+        <div class="id-corner br"></div>
+        <div class="id-scan"></div>
+        <div class="id-inner">
+          <div class="id-top">
+            <div class="id-pill">
+              <div class="pill-dot"></div>
+              <span class="t t-en active">Open to work</span>
+              <span class="t t-fr">Disponible</span>
+              <span class="t t-ar">متاح للعمل</span>
+            </div>
+            <div class="id-ref">REF · 2025</div>
+          </div>
+          <div class="id-center">
+            <div class="id-mono">MA</div>
+            <div class="id-name-spaced">M · A · R · S · L · I</div>
+          </div>
+          <div class="id-bottom">
+            <div>
+              <div class="id-role-label">
+                <span class="t t-en active">Role</span>
+                <span class="t t-fr">Rôle</span>
+                <span class="t t-ar">الدور</span>
+              </div>
+              <div class="id-role-val">
+                <span class="t t-en active">Web Developer</span>
+                <span class="t t-fr">Développeur Web</span>
+                <span class="t t-ar">مطوّر ويب</span>
+              </div>
+            </div>
+            <div class="id-year">EST. 2022</div>
+          </div>
+        </div>
+      </div>
+      <div class="about-badge">
+        <span class="t t-en active">Available ✦</span>
+        <span class="t t-fr">Disponible ✦</span>
+        <span class="t t-ar">متاح ✦</span>
+      </div>
+    </div>
+
+    <div class="about-text fade-up">
+      <p class="about-body">
+        <span class="t t-en active">Hey, I'm <strong>Marsli</strong> — a web developer obsessed with the intersection of <strong>clean code</strong> and <strong>beautiful design</strong>. I specialize in building digital products that don't just work — they make people stop and stare.</span>
+        <span class="t t-fr">Bonjour, je suis <strong>Marsli</strong> — un développeur web passionné par l'alliance entre <strong>code propre</strong> et <strong>design élégant</strong>. Je crée des produits digitaux qui ne fonctionnent pas seulement — ils marquent les esprits.</span>
+        <span class="t t-ar">مرحباً، أنا <strong>مارسلي</strong> — مطوّر ويب مهتم بالجمع بين <strong>الكود النظيف</strong> و<strong>التصميم الجميل</strong>. أبني منتجات رقمية لا تعمل فقط — بل تأسر الأنظار.</span>
+      </p>
+      <p class="about-body">
+        <span class="t t-en active">From pixel-perfect landing pages to complex web apps, I bring <strong>modern aesthetics</strong> and <strong>technical precision</strong> to every project. My stack is always evolving, my standards never are.</span>
+        <span class="t t-fr">Des landing pages parfaites aux applications complexes, j'apporte <strong>une esthétique moderne</strong> et <strong>une précision technique</strong> à chaque projet.</span>
+        <span class="t t-ar">من الصفحات المقصودة المتقنة إلى التطبيقات المعقدة، أجلب <strong>جماليات حديثة</strong> و<strong>دقة تقنية</strong> لكل مشروع.</span>
+      </p>
+
+      <div class="skills-wrap">
+        <div class="eyebrow" style="margin-bottom:1rem;">
+          <span class="t t-en active">Tech Stack</span>
+          <span class="t t-fr">Technologies</span>
+          <span class="t t-ar">التقنيات</span>
+        </div>
+        <div class="skill-row slide-left" style="--d:.1s">
+          <div class="skill-name">React / Next</div>
+          <div class="skill-bar-bg"><div class="skill-bar" style="--w:.95" data-w=".95"></div></div>
+        </div>
+        <div class="skill-row slide-left" style="--d:.2s">
+          <div class="skill-name">Node.js</div>
+          <div class="skill-bar-bg"><div class="skill-bar" style="--w:.88" data-w=".88"></div></div>
+        </div>
+        <div class="skill-row slide-left" style="--d:.3s">
+          <div class="skill-name">UI Design</div>
+          <div class="skill-bar-bg"><div class="skill-bar" style="--w:.9" data-w=".9"></div></div>
+        </div>
+        <div class="skill-row slide-left" style="--d:.4s">
+          <div class="skill-name">TypeScript</div>
+          <div class="skill-bar-bg"><div class="skill-bar" style="--w:.82" data-w=".82"></div></div>
+        </div>
+        <div class="skill-row slide-left" style="--d:.5s">
+          <div class="skill-name">Animation</div>
+          <div class="skill-bar-bg"><div class="skill-bar" style="--w:.85" data-w=".85"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="eyebrow">
+    <span class="t t-en active">What I do</span>
+    <span class="t t-fr">Ce que je fais</span>
+    <span class="t t-ar">ما أقدمه</span>
+  </div>
+  <h2 class="section-h fade-up">
+    <span class="t t-en active">SERVICES</span>
+    <span class="t t-fr">SERVICES</span>
+    <span class="t t-ar">الخدمات</span>
+  </h2>
+  <p class="section-sub fade-up">
+    <span class="t t-en active">From strategy to launch — I handle every pixel and every line of code.</span>
+    <span class="t t-fr">De la stratégie au lancement — je gère chaque pixel et chaque ligne de code.</span>
+    <span class="t t-ar">من الاستراتيجية حتى الإطلاق — أتولى كل بكسل وكل سطر كود.</span>
+  </p>
+  <div class="services-grid">
+    <div class="svc-card fade-up">
+      <div class="svc-num">01</div>
+      <span class="svc-icon">🌐</span>
+      <div class="svc-title"><span class="t t-en active">Web Design</span><span class="t t-fr">Design Web</span><span class="t t-ar">تصميم الويب</span></div>
+      <p class="svc-desc"><span class="t t-en active">Pixel-perfect UI/UX design that converts. Wireframes, prototypes, and high-fidelity mockups tailored to your brand.</span><span class="t t-fr">Design UI/UX parfait au pixel près. Wireframes, prototypes et maquettes haute fidélité adaptés à votre marque.</span><span class="t t-ar">تصميم واجهة مستخدم مثالي بدقة البكسل. تصاميم أولية ونماذج عالية الدقة مصممة لعلامتك التجارية.</span></p>
+      <div class="svc-tags"><span class="stag">Figma</span><span class="stag">UI/UX</span><span class="stag">Prototyping</span></div>
+    </div>
+    <div class="svc-card fade-up">
+      <div class="svc-num">02</div>
+      <span class="svc-icon">⚡</span>
+      <div class="svc-title"><span class="t t-en active">Frontend Dev</span><span class="t t-fr">Dév. Frontend</span><span class="t t-ar">تطوير الواجهة</span></div>
+      <p class="svc-desc"><span class="t t-en active">Blazing-fast, SEO-optimised frontends built with React and Next.js. Animations that delight, performance that dominates.</span><span class="t t-fr">Frontends ultra-rapides et SEO-optimisés avec React et Next.js. Animations spectaculaires, performance dominante.</span><span class="t t-ar">واجهات سريعة ومحسّنة لمحركات البحث باستخدام React و Next.js.</span></p>
+      <div class="svc-tags"><span class="stag">React</span><span class="stag">Next.js</span><span class="stag">GSAP</span></div>
+    </div>
+    <div class="svc-card fade-up">
+      <div class="svc-num">03</div>
+      <span class="svc-icon">🔧</span>
+      <div class="svc-title"><span class="t t-en active">Full-Stack Apps</span><span class="t t-fr">Apps Full-Stack</span><span class="t t-ar">تطبيقات متكاملة</span></div>
+      <p class="svc-desc"><span class="t t-en active">End-to-end web applications — from database design to deployment. Scalable, secure, production-ready.</span><span class="t t-fr">Applications web de bout en bout — de la base de données au déploiement. Évolutives, sécurisées, prêtes pour la production.</span><span class="t t-ar">تطبيقات ويب متكاملة من تصميم قاعدة البيانات إلى النشر.</span></p>
+      <div class="svc-tags"><span class="stag">Node.js</span><span class="stag">Supabase</span><span class="stag">APIs</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- WORK -->
+<section id="work">
+  <div class="eyebrow">
+    <span class="t t-en active">Selected work</span>
+    <span class="t t-fr">Travaux sélectionnés</span>
+    <span class="t t-ar">أعمال مختارة</span>
+  </div>
+  <h2 class="section-h fade-up">
+    <span class="t t-en active">PROJECTS</span>
+    <span class="t t-fr">PROJETS</span>
+    <span class="t t-ar">المشاريع</span>
+  </h2>
+  <div class="work-grid">
+    <div class="proj-card fade-up">
+      <div class="proj-bg bg1">
+        <div class="proj-deco">
+          <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:.3" viewBox="0 0 800 400"><circle cx="600" cy="200" r="250" fill="none" stroke="rgba(124,111,255,0.2)" stroke-width="1"/><circle cx="600" cy="200" r="180" fill="none" stroke="rgba(124,111,255,0.25)" stroke-width="1"/><circle cx="600" cy="200" r="100" fill="none" stroke="rgba(124,111,255,0.3)" stroke-width="1"/><circle cx="600" cy="200" r="40" fill="rgba(124,111,255,0.35)"/></svg>
+        </div>
+      </div>
+      <div class="proj-overlay">
+        <div class="proj-type"><span class="t t-en active">SaaS Platform</span><span class="t t-fr">Plateforme SaaS</span><span class="t t-ar">منصة SaaS</span></div>
+        <div class="proj-name">Nexus Dashboard</div>
+        <div class="proj-desc"><span class="t t-en active">Full-featured analytics dashboard built with React and Next.js. Real-time data, dark interface, blazing fast.</span><span class="t t-fr">Tableau de bord analytique complet avec React et Next.js. Données en temps réel, interface sombre.</span><span class="t t-ar">لوحة تحكم تحليلية شاملة مبنية بـ React و Next.js.</span></div>
+        <a href="#" class="proj-link"><span class="t t-en active">View Project</span><span class="t t-fr">Voir le projet</span><span class="t t-ar">عرض المشروع</span> ↗</a>
+      </div>
+    </div>
+    <div class="proj-card fade-up">
+      <div class="proj-bg bg2">
+        <div class="proj-deco">
+          <svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 400 300"><rect x="150" y="75" width="120" height="120" fill="none" stroke="rgba(52,211,153,0.25)" stroke-width="1" transform="rotate(20 210 135)"/><rect x="165" y="90" width="90" height="90" fill="none" stroke="rgba(52,211,153,0.2)" stroke-width="1" transform="rotate(40 210 135)"/></svg>
+        </div>
+      </div>
+      <div class="proj-overlay">
+        <div class="proj-type"><span class="t t-en active">E-commerce</span><span class="t t-fr">E-commerce</span><span class="t t-ar">متجر إلكتروني</span></div>
+        <div class="proj-name">Verdant Store</div>
+        <div class="proj-desc"><span class="t t-en active">Modern e-commerce built on Next.js with headless CMS and Stripe integration.</span><span class="t t-fr">E-commerce moderne avec CMS headless et intégration Stripe.</span><span class="t t-ar">متجر إلكتروني حديث مع CMS بلا رأس وتكامل Stripe.</span></div>
+        <a href="#" class="proj-link"><span class="t t-en active">View Project</span><span class="t t-fr">Voir le projet</span><span class="t t-ar">عرض المشروع</span> ↗</a>
+      </div>
+    </div>
+    <div class="proj-card fade-up">
+      <div class="proj-bg bg3">
+        <div class="proj-deco">
+          <svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 400 300"><line x1="50" y1="150" x2="350" y2="150" stroke="rgba(255,77,109,0.3)" stroke-width="1" transform="rotate(-20 200 150)"/><line x1="50" y1="150" x2="350" y2="150" stroke="rgba(255,77,109,0.3)" stroke-width="1" transform="rotate(20 200 150)"/><circle cx="200" cy="150" r="30" fill="rgba(255,77,109,0.15)"/></svg>
+        </div>
+      </div>
+      <div class="proj-overlay">
+        <div class="proj-type"><span class="t t-en active">Brand Website</span><span class="t t-fr">Site de marque</span><span class="t t-ar">موقع العلامة التجارية</span></div>
+        <div class="proj-name">Prism Agency</div>
+        <div class="proj-desc"><span class="t t-en active">Animated brand website with GSAP scroll effects and a custom CMS backend.</span><span class="t t-fr">Site animé avec effets de défilement GSAP et CMS personnalisé.</span><span class="t t-ar">موقع علامة تجارية متحرك مع تأثيرات GSAP ونظام CMS مخصص.</span></div>
+        <a href="#" class="proj-link"><span class="t t-en active">View Project</span><span class="t t-fr">Voir le projet</span><span class="t t-ar">عرض المشروع</span> ↗</a>
+      </div>
+    </div>
+    <div class="proj-card fade-up">
+      <div class="proj-bg bg4">
+        <div class="proj-deco">
+          <svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 400 300">
+            <rect x="145" y="95" width="25" height="25" fill="none" stroke="rgba(167,139,250,0.3)" stroke-width="1" rx="3"/>
+            <rect x="185" y="95" width="25" height="25" fill="rgba(167,139,250,0.15)" rx="3"/>
+            <rect x="225" y="95" width="25" height="25" fill="none" stroke="rgba(167,139,250,0.3)" stroke-width="1" rx="3"/>
+            <rect x="145" y="130" width="25" height="25" fill="rgba(167,139,250,0.1)" rx="3"/>
+            <rect x="185" y="130" width="25" height="25" fill="none" stroke="rgba(167,139,250,0.3)" stroke-width="1" rx="3"/>
+            <rect x="225" y="130" width="25" height="25" fill="rgba(167,139,250,0.2)" rx="3"/>
+            <rect x="145" y="165" width="25" height="25" fill="none" stroke="rgba(167,139,250,0.2)" stroke-width="1" rx="3"/>
+            <rect x="185" y="165" width="25" height="25" fill="rgba(167,139,250,0.15)" rx="3"/>
+            <rect x="225" y="165" width="25" height="25" fill="none" stroke="rgba(167,139,250,0.3)" stroke-width="1" rx="3"/>
+          </svg>
+        </div>
+      </div>
+      <div class="proj-overlay">
+        <div class="proj-type"><span class="t t-en active">Web App</span><span class="t t-fr">Application Web</span><span class="t t-ar">تطبيق ويب</span></div>
+        <div class="proj-name">Orbital Todo</div>
+        <div class="proj-desc"><span class="t t-en active">Minimalist productivity app with real-time sync, built with React and Supabase.</span><span class="t t-fr">App de productivité minimaliste avec synchronisation en temps réel.</span><span class="t t-ar">تطبيق إنتاجية مبسّط مع مزامنة فورية.</span></div>
+        <a href="#" class="proj-link"><span class="t t-en active">View Project</span><span class="t t-fr">Voir le projet</span><span class="t t-ar">عرض المشروع</span> ↗</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PROCESS -->
+<section id="process">
+  <div class="eyebrow">
+    <span class="t t-en active">How I work</span>
+    <span class="t t-fr">Comment je travaille</span>
+    <span class="t t-ar">كيف أعمل</span>
+  </div>
+  <h2 class="section-h fade-up">
+    <span class="t t-en active">MY PROCESS</span>
+    <span class="t t-fr">MON PROCESSUS</span>
+    <span class="t t-ar">منهجيتي</span>
+  </h2>
+  <div class="process-list">
+    <div class="proc-item fade-up">
+      <div class="proc-num">01</div>
+      <div class="proc-line"></div>
+      <div class="proc-content">
+        <div class="proc-title"><span class="t t-en active">Discovery & Strategy</span><span class="t t-fr">Découverte & Stratégie</span><span class="t t-ar">الاستكشاف والاستراتيجية</span></div>
+        <p class="proc-desc"><span class="t t-en active">I start with a deep dive into your brand, audience, and goals. No templates — every project begins with a bespoke strategy tailored to your vision and market.</span><span class="t t-fr">Je commence par une analyse approfondie de votre marque, audience et objectifs. Chaque projet commence par une stratégie sur mesure.</span><span class="t t-ar">أبدأ بالغوص عميقاً في علامتك التجارية وجمهورك وأهدافك. لا قوالب — كل مشروع يبدأ باستراتيجية مخصصة.</span></p>
+      </div>
+    </div>
+    <div class="proc-item fade-up">
+      <div class="proc-num">02</div>
+      <div class="proc-line"></div>
+      <div class="proc-content">
+        <div class="proc-title"><span class="t t-en active">Design & Prototype</span><span class="t t-fr">Design & Prototype</span><span class="t t-ar">التصميم والنماذج</span></div>
+        <p class="proc-desc"><span class="t t-en active">Wireframes evolve into high-fidelity Figma designs. You review and approve before a single line of production code is written. No surprises.</span><span class="t t-fr">Les wireframes évoluent en maquettes Figma haute fidélité. Vous validez avant que la moindre ligne de code ne soit écrite.</span><span class="t t-ar">تتطور الرسوم الإطارية إلى تصاميم Figma عالية الدقة. تراجع وتوافق قبل كتابة أي سطر كود.</span></p>
+      </div>
+    </div>
+    <div class="proc-item fade-up">
+      <div class="proc-num">03</div>
+      <div class="proc-line"></div>
+      <div class="proc-content">
+        <div class="proc-title"><span class="t t-en active">Development & Animation</span><span class="t t-fr">Développement & Animation</span><span class="t t-ar">التطوير والتحريك</span></div>
+        <p class="proc-desc"><span class="t t-en active">Clean, semantic code. Performance-optimized animations. Accessibility built-in. I build it right the first time — because speed matters, but so does craft.</span><span class="t t-fr">Code propre et sémantique. Animations optimisées. Accessibilité intégrée. Je le construis bien du premier coup.</span><span class="t t-ar">كود نظيف ودلالي. رسوم متحركة محسّنة. إمكانية الوصول مدمجة. أبنيه بشكل صحيح من المرة الأولى.</span></p>
+      </div>
+    </div>
+    <div class="proc-item fade-up">
+      <div class="proc-num">04</div>
+      <div class="proc-line"></div>
+      <div class="proc-content">
+        <div class="proc-title"><span class="t t-en active">Launch & Support</span><span class="t t-fr">Lancement & Support</span><span class="t t-ar">الإطلاق والدعم</span></div>
+        <p class="proc-desc"><span class="t t-en active">Full deployment support, thorough testing across devices, and ongoing maintenance options. I don't disappear after launch — your success is my portfolio.</span><span class="t t-fr">Support de déploiement complet, tests approfondis et maintenance continue. Je ne disparais pas après le lancement.</span><span class="t t-ar">دعم نشر كامل، اختبار شامل عبر الأجهزة، وخيارات صيانة مستمرة.</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials">
+  <div class="eyebrow">
+    <span class="t t-en active">Client love</span>
+    <span class="t t-fr">Témoignages</span>
+    <span class="t t-ar">آراء العملاء</span>
+  </div>
+  <h2 class="section-h fade-up">
+    <span class="t t-en active">WHAT PEOPLE SAY</span>
+    <span class="t t-fr">CE QU'ILS DISENT</span>
+    <span class="t t-ar">ما يقوله الناس</span>
+  </h2>
+  <div class="testi-grid">
+    <div class="testi-card fade-up">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-quote"><span class="t t-en active">Marsli delivered a site that completely blew our expectations. It's fast, beautiful, and our conversion rate jumped 40% in the first month.</span><span class="t t-fr">Marsli a livré un site qui a dépassé toutes nos attentes. Rapide, magnifique et notre taux de conversion a bondi de 40% le premier mois.</span><span class="t t-ar">قدّم مارسلي موقعاً تجاوز كل توقعاتنا. سريع وجميل وارتفع معدل التحويل لدينا بنسبة 40% في الشهر الأول.</span></p>
+      <div class="testi-author">
+        <div class="testi-av">SA</div>
+        <div>
+          <div class="testi-name">Sara Alaoui</div>
+          <div class="testi-role">CEO, Lumina Brand</div>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card fade-up">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-quote"><span class="t t-en active">Working with Marsli was seamless. The attention to detail, the communication, and the final product — all exceptional. Will hire again for sure.</span><span class="t t-fr">Travailler avec Marsli était fluide. L'attention aux détails, la communication, et le produit final — tout était exceptionnel.</span><span class="t t-ar">كان العمل مع مارسلي سلساً. الاهتمام بالتفاصيل والتواصل والمنتج النهائي — كل شيء استثنائي.</span></p>
+      <div class="testi-author">
+        <div class="testi-av" style="background:var(--a3)">KM</div>
+        <div>
+          <div class="testi-name">Karim Mansouri</div>
+          <div class="testi-role">Founder, Orbio Labs</div>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card fade-up">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-quote"><span class="t t-en active">Our web app went from a rough idea to a polished product in 3 weeks. Marsli is the rare developer who truly understands design and business.</span><span class="t t-fr">Notre application est passée d'une idée brute à un produit soigné en 3 semaines. Marsli est un développeur rare qui comprend vraiment le design et le business.</span><span class="t t-ar">انتقل تطبيقنا من فكرة خام إلى منتج متقن في 3 أسابيع. مارسلي مطوّر نادر يفهم حقاً التصميم والأعمال.</span></p>
+      <div class="testi-author">
+        <div class="testi-av" style="background:var(--red)">LB</div>
+        <div>
+          <div class="testi-name">Leila Benhaddou</div>
+          <div class="testi-role">Product Lead, Vortex</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="eyebrow">
+    <span class="t t-en active">Contact</span>
+    <span class="t t-fr">Contact</span>
+    <span class="t t-ar">تواصل</span>
+  </div>
+  <h2 class="section-h fade-up">
+    <span class="t t-en active">LET'S BUILD<br>SOMETHING GREAT</span>
+    <span class="t t-fr">CRÉONS<br>QUELQUE CHOSE</span>
+    <span class="t t-ar">لنبني<br>شيئاً عظيماً</span>
+  </h2>
+  <div class="contact-grid fade-up">
+    <div class="contact-info">
+      <div class="contact-avail">
+        <div class="avail-dot"></div>
+        <span class="t t-en active">Available for new projects</span>
+        <span class="t t-fr">Disponible pour de nouveaux projets</span>
+        <span class="t t-ar">متاح للمشاريع الجديدة</span>
+      </div>
+      <div class="c-item">
+        <span class="c-label"><span class="t t-en active">Email</span><span class="t t-fr">Email</span><span class="t t-ar">البريد</span></span>
+        <a href="mailto:marsli.thecreator@gmail.com" class="c-val">marsli.thecreator@gmail.com</a>
+      </div>
+      <div class="c-item">
+        <span class="c-label"><span class="t t-en active">WhatsApp</span><span class="t t-fr">WhatsApp</span><span class="t t-ar">واتساب</span></span>
+        <a href="https://wa.me/212775436569" target="_blank" class="c-val">+212 775 436 569</a>
+      </div>
+      <div class="c-item">
+        <span class="c-label"><span class="t t-en active">Location</span><span class="t t-fr">Localisation</span><span class="t t-ar">الموقع</span></span>
+        <span class="c-val">Casablanca, Morocco 🇲🇦</span>
+      </div>
+      <div class="c-item">
+        <span class="c-label"><span class="t t-en active">Social</span><span class="t t-fr">Réseaux</span><span class="t t-ar">التواصل</span></span>
+        <a href="https://x.com/MarsliDev" target="_blank" class="c-val" style="font-size:.95rem;">Twitter / X @MarsliDev</a>
+      </div>
+      <div class="c-item">
+        <span class="c-label">Instagram</span>
+        <a href="https://instagram.com/marsli.dev" target="_blank" class="c-val" style="font-size:.95rem;">@marsli.dev</a>
+      </div>
+      <div class="c-note">
+        <div class="c-note-title"><span class="t t-en active">Response time</span><span class="t t-fr">Délai de réponse</span><span class="t t-ar">وقت الرد</span></div>
+        <p class="c-note-body">
+          <span class="t t-en active">I typically respond within <strong>24 hours</strong>. For urgent projects, mention it in your message.</span>
+          <span class="t t-fr">Je réponds généralement dans les <strong>24 heures</strong>. Pour les projets urgents, mentionnez-le.</span>
+          <span class="t t-ar">أرد عادةً خلال <strong>24 ساعة</strong>. للمشاريع العاجلة، أذكر ذلك في رسالتك.</span>
+        </p>
+      </div>
+    </div>
+
+    <form class="contact-form" onsubmit="handleSubmit(event)" id="contact-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label"><span class="t t-en active">First name</span><span class="t t-fr">Prénom</span><span class="t t-ar">الاسم الأول</span></label>
+          <input type="text" id="first_name" name="first_name" class="form-input" placeholder="John" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><span class="t t-en active">Last name</span><span class="t t-fr">Nom</span><span class="t t-ar">اسم العائلة</span></label>
+          <input type="text" id="last_name" name="last_name" class="form-input" placeholder="Doe" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="from_email" name="from_email" class="form-input" placeholder="you@email.com" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><span class="t t-en active">Project type</span><span class="t t-fr">Type de projet</span><span class="t t-ar">نوع المشروع</span></label>
+        <select id="project_type" name="project_type" class="form-select" required>
+          <option value="" disabled selected>
+            <span class="t t-en active">Select a service...</span>
+          </option>
+          <option>Website / Landing Page</option>
+          <option>Web App / UI Design</option>
+          <option>Full Stack Development</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><span class="t t-en active">Budget range</span><span class="t t-fr">Budget</span><span class="t t-ar">الميزانية</span></label>
+        <select id="budget" name="budget" class="form-select" required>
+          <option value="" disabled selected>
+            <span class="t t-en active">Select a budget...</span>
+          </option>
+          <option>Under $500</option>
+          <option>$500 – $1,500</option>
+          <option>$1,500 – $5,000</option>
+          <option>$5,000+</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><span class="t t-en active">Tell me about your project</span><span class="t t-fr">Parlez-moi de votre projet</span><span class="t t-ar">أخبرني عن مشروعك</span></label>
+        <textarea id="message" name="message" class="form-textarea" placeholder="..." required></textarea>
+      </div>
+      <button type="submit" class="btn-submit" id="submit-btn">
+        <span class="t t-en active">Send message →</span>
+        <span class="t t-fr">Envoyer →</span>
+        <span class="t t-ar">إرسال →</span>
+      </button>
+    </form>
+  </div>
+</section>
+
+<!-- HIRE MODAL -->
+<div id="hire-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeHireModal()">✕</button>
+    <div class="modal-eyebrow">
+      <span class="t t-en active">Let's work together</span>
+      <span class="t t-fr">Travaillons ensemble</span>
+      <span class="t t-ar">لنعمل معاً</span>
+    </div>
+    <h3 class="modal-title">
+      <span class="t t-en active">Hire Marsli</span>
+      <span class="t t-fr">Recruter Marsli</span>
+      <span class="t t-ar">وظّف مارسلي</span>
+    </h3>
+    <p class="modal-sub">
+      <span class="t t-en active">Ready to build something great? Reach out directly and I'll get back to you within 24 hours.</span>
+      <span class="t t-fr">Prêt à créer quelque chose de grand ? Contactez-moi directement et je vous réponds sous 24h.</span>
+      <span class="t t-ar">هل أنت مستعد لبناء شيء رائع؟ تواصل معي مباشرةً وسأردّ عليك خلال 24 ساعة.</span>
+    </p>
+    <div class="modal-options">
+      <a href="https://mail.google.com/mail/?view=cm&to=marsli.thecreator@gmail.com&su=Hiring+Inquiry+-+Web+Project" target="_blank" class="modal-opt modal-opt-primary">
+        <span style="font-size:1.2rem">✉</span>
+        <span class="t t-en active">Email me directly</span>
+        <span class="t t-fr">M'envoyer un email</span>
+        <span class="t t-ar">راسلني مباشرة</span>
+      </a>
+      <a href="https://wa.me/212775436569?text=Hi%20Marsli%2C%20I%20want%20to%20hire%20you%20for%20a%20project!" target="_blank" class="modal-opt modal-opt-ghost">
+        <span style="font-size:1.2rem">💬</span>
+        <span class="t t-en active">WhatsApp me</span>
+        <span class="t t-fr">WhatsApp</span>
+        <span class="t t-ar">تواصل عبر واتساب</span>
+      </a>
+      <a href="https://x.com/MarsliDev" target="_blank" class="modal-opt modal-opt-ghost">
+        <span style="font-size:1.2rem">𝕏</span>
+        <span class="t t-en active">DM on X / Twitter</span>
+        <span class="t t-fr">Message sur X / Twitter</span>
+        <span class="t t-ar">راسلني على تويتر</span>
+      </a>
+      <a href="https://instagram.com/marsli.dev" target="_blank" class="modal-opt modal-opt-ghost">
+        <span style="font-size:1.2rem">📸</span>
+        <span class="t t-en active">DM on Instagram</span>
+        <span class="t t-fr">Message sur Instagram</span>
+        <span class="t t-ar">راسلني على إنستغرام</span>
+      </a>
+      <a href="#contact" onclick="closeHireModal()" class="modal-footer-link">
+        <span class="t t-en active">Or fill the contact form ↓</span>
+        <span class="t t-fr">Ou remplir le formulaire ↓</span>
+        <span class="t t-ar">أو املأ نموذج التواصل ↓</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">© 2026 <strong>Marsli</strong> · Built with precision</div>
+  <div class="footer-links">
+    <a href="#about"><span class="t t-en active">About</span><span class="t t-fr">À propos</span><span class="t t-ar">عني</span></a>
+    <a href="#work"><span class="t t-en active">Work</span><span class="t t-fr">Projets</span><span class="t t-ar">أعمال</span></a>
+    <a href="#services"><span class="t t-en active">Services</span><span class="t t-fr">Services</span><span class="t t-ar">خدمات</span></a>
+    <a href="#contact"><span class="t t-en active">Contact</span><span class="t t-fr">Contact</span><span class="t t-ar">تواصل</span></a>
+    <a href="https://instagram.com/marsli.dev" target="_blank">Instagram</a>
+    <a href="https://x.com/MarsliDev" target="_blank">Twitter / X</a>
+  </div>
+</footer>
+
+<script>
+/* ─── CURSOR ──────────────────────────────────── */
+const cur = document.getElementById('cur');
+const ring = document.getElementById('cur-ring');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+(function raf() {
+  rx += (mx - rx) * .12;
+  ry += (my - ry) * .12;
+  cur.style.left = mx + 'px';
+  cur.style.top = my + 'px';
+  ring.style.left = rx + 'px';
+  ring.style.top = ry + 'px';
+  requestAnimationFrame(raf);
+})();
+document.querySelectorAll('a, button, .svc-card, .proj-card, .testi-card, .proc-item').forEach(el => {
+  el.addEventListener('mouseenter', () => document.body.classList.add('cur-hover'));
+  el.addEventListener('mouseleave', () => document.body.classList.remove('cur-hover'));
+});
+document.querySelectorAll('a, button').forEach(el => {
+  el.addEventListener('mouseenter', () => document.body.classList.add('cur-link'));
+  el.addEventListener('mouseleave', () => document.body.classList.remove('cur-link'));
+});
+document.addEventListener('mouseleave', () => { cur.style.opacity='0'; ring.style.opacity='0'; });
+document.addEventListener('mouseenter', () => { cur.style.opacity='1'; ring.style.opacity='1'; });
+
+/* ─── SCROLL PROGRESS ─────────────────────────── */
+window.addEventListener('scroll', () => {
+  const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
+  document.getElementById('progress').style.width = pct + '%';
+});
+
+/* ─── NAV SCROLL ──────────────────────────────── */
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 60);
+});
+
+/* ─── PARTICLES ───────────────────────────────── */
+const pWrap = document.getElementById('particles');
+for (let i = 0; i < 18; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  const size = Math.random() * 3 + 1;
+  p.style.cssText = `
+    width:${size}px; height:${size}px;
+    left:${Math.random()*100}%;
+    --dur:${6+Math.random()*10}s;
+    --delay:-${Math.random()*16}s;
+    background: ${Math.random()>.6?'var(--a3)':'var(--a)'};
+  `;
+  pWrap.appendChild(p);
+}
+
+/* ─── SCROLL ANIMATIONS ───────────────────────── */
+const io = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => {
+        e.target.classList.add('visible');
+        // Animate skill bars inside
+        e.target.querySelectorAll('.skill-bar').forEach(b => b.classList.add('animated'));
+      }, i * 100);
+    }
+  });
+}, { threshold: .12 });
+
+document.querySelectorAll('.fade-up, .slide-left').forEach(el => io.observe(el));
+
+// Stagger grid children
+document.querySelectorAll('.services-grid, .testi-grid, .work-grid').forEach(g => {
+  g.querySelectorAll(':scope > *').forEach((c, i) => {
+    c.style.transitionDelay = i*.1+'s';
+    c.classList.add('fade-up');
+    io.observe(c);
+  });
+});
+document.querySelectorAll('.proc-item').forEach((item, i) => {
+  item.style.transitionDelay = i*.1+'s';
+  io.observe(item);
+});
+document.querySelectorAll('.skill-row').forEach((r, i) => {
+  r.style.transitionDelay = r.style.getPropertyValue('--d') || i*.1+'s';
+  io.observe(r);
+});
+
+/* ─── LANGUAGE SYSTEM ─────────────────────────── */
+function setLang(lang) {
+  // Update buttons
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.trim().toLowerCase() === lang);
+  });
+
+  // Direction
+  const isRtl = lang === 'ar';
+  document.documentElement.lang = lang;
+  document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
+
+  // Toggle text nodes
+  ['en','fr','ar'].forEach(l => {
+    const cls = 't-'+l;
+    document.querySelectorAll('.t.'+cls).forEach(el => {
+      el.classList.toggle('active', l === lang);
+    });
+    document.querySelectorAll('.tb.'+cls).forEach(el => {
+      el.classList.toggle('active', l === lang);
+    });
+    document.querySelectorAll('.ti.'+cls).forEach(el => {
+      el.classList.toggle('active', l === lang);
+    });
+  });
+  localStorage.setItem('marsli_lang', lang);
+}
+
+// Load saved language
+const saved = localStorage.getItem('marsli_lang');
+if (saved && saved !== 'en') setLang(saved);
+
+/* ─── NAV ACTIVE STATE ────────────────────────── */
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-links a');
+window.addEventListener('scroll', () => {
+  let cur2 = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 200) cur2 = s.id; });
+  navLinks.forEach(a => {
+    const active = a.getAttribute('href') === '#'+cur2;
+    a.style.color = active ? 'var(--text)' : '';
+  });
+}, { passive: true });
+
+/* ─── EMAILJS SETUP ───────────────────────────── */
+// 🔧 SETUP INSTRUCTIONS FOR CONTACT FORM EMAIL:
+// 1. Go to https://www.emailjs.com and create a free account
+// 2. Click "Email Services" → "Add New Service" → choose Gmail → connect marsli.thecreator@gmail.com
+// 3. Click "Email Templates" → "Create New Template"
+//    - In the template, add fields: {{first_name}}, {{last_name}}, {{from_email}}, {{project_type}}, {{budget}}, {{message}}
+//    - Set "To email" to marsli.thecreator@gmail.com
+// 4. Click "Account" → copy your Public Key
+// 5. Replace the 3 values below:
+const EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY';   // From EmailJS → Account
+const EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID';   // From EmailJS → Email Services
+const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';  // From EmailJS → Email Templates
+emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+
+async function handleSubmit(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  const origHTML = btn.innerHTML;
+  btn.innerHTML = '<span style="opacity:.7">Sending...</span>';
+  btn.disabled = true;
+
+  const params = {
+    first_name:   document.getElementById('first_name').value,
+    last_name:    document.getElementById('last_name').value,
+    from_email:   document.getElementById('from_email').value,
+    project_type: document.getElementById('project_type').value,
+    budget:       document.getElementById('budget').value,
+    message:      document.getElementById('message').value,
+    to_email:     'marsli.thecreator@gmail.com',
+  };
+
+  try {
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params);
+    btn.innerHTML = '✓ Message sent! Check your Gmail.';
+    btn.style.background = 'var(--green)';
+    document.getElementById('contact-form').reset();
+  } catch (err) {
+    btn.innerHTML = '✗ Failed — try WhatsApp instead';
+    btn.style.background = 'var(--red)';
+  }
+  btn.disabled = false;
+  setTimeout(() => {
+    btn.innerHTML = origHTML;
+    btn.style.background = '';
+  }, 5000);
+}
+
+/* ─── HIRE MODAL ──────────────────────────────── */
+function openHireModal(e) {
+  e.preventDefault();
+  document.getElementById('hire-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeHireModal() {
+  document.getElementById('hire-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('hire-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeHireModal();
+});
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeHireModal(); });
+
+/* ═══════════════════════════════════════════════════
+   ✦ SPECTACULAR ANIMATION JS ✦
+═══════════════════════════════════════════════════ */
+
+/* ─── CURSOR SPARKLES ──────────────────────────── */
+let lastSparkle = 0;
+document.addEventListener('mousemove', e => {
+  const now = Date.now();
+  if (now - lastSparkle < 60) return;
+  lastSparkle = now;
+  const s = document.createElement('div');
+  s.className = 'sparkle';
+  const size = Math.random() * 6 + 3;
+  const angle = Math.random() * Math.PI * 2;
+  const dist = Math.random() * 30 + 10;
+  s.style.cssText = `
+    width:${size}px; height:${size}px;
+    left:${e.clientX}px; top:${e.clientY}px;
+    transform:translate(-50%,-50%);
+    --sx:${Math.cos(angle)*dist}px;
+    --sy:${Math.sin(angle)*dist}px;
+    opacity:${Math.random()*.6+.3};
+    background:${Math.random()>.5?'var(--a2)':'var(--a3)'};
+  `;
+  document.body.appendChild(s);
+  setTimeout(() => s.remove(), 700);
+});
+
+/* ─── MAGNETIC HERO TITLE ──────────────────────── */
+const heroTitle = document.querySelector('.hero-title');
+if (heroTitle) {
+  document.addEventListener('mousemove', e => {
+    const rect = heroTitle.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = (e.clientX - cx) / window.innerWidth;
+    const dy = (e.clientY - cy) / window.innerHeight;
+    heroTitle.style.transform = `perspective(1000px) rotateY(${dx * 4}deg) rotateX(${-dy * 3}deg) translateZ(0)`;
+  });
+}
+
+/* ─── 3D TILT ON SERVICE CARDS ─────────────────── */
+document.querySelectorAll('.svc-card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width - .5) * 12;
+    const y = ((e.clientY - r.top) / r.height - .5) * -12;
+    card.style.transform = `perspective(600px) rotateY(${x}deg) rotateX(${y}deg) translateZ(8px)`;
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = '';
+  });
+});
+
+/* ─── TILT ON PROJECT CARDS ────────────────────── */
+document.querySelectorAll('.proj-card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width - .5) * 8;
+    const y = ((e.clientY - r.top) / r.height - .5) * -8;
+    card.style.transform = `perspective(800px) rotateY(${x}deg) rotateX(${y}deg)`;
+  });
+  card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+});
+
+/* ─── BUTTON RIPPLE ────────────────────────────── */
+document.querySelectorAll('.btn-p').forEach(btn => {
+  btn.addEventListener('click', e => {
+    const r = document.createElement('span');
+    r.className = 'ripple';
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    r.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px;`;
+    btn.appendChild(r);
+    setTimeout(() => r.remove(), 600);
+  });
+});
+
+/* ─── COUNTING NUMBER ANIMATION ─────────────────── */
+function animateCount(el, target, suffix='', dur=1800) {
+  let start = null;
+  const step = ts => {
+    if (!start) start = ts;
+    const p = Math.min((ts - start) / dur, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    const val = Math.round(ease * target);
+    el.innerHTML = val + suffix + (el.querySelector('span') ? '<span>' + el.querySelector('span').textContent + '</span>' : '');
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+/* observe hero card stats */
+const heroCard = document.querySelector('.hero-card');
+if (heroCard) {
+  const heroObs = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) {
+      const nums = heroCard.querySelectorAll('.hc-stat-num');
+      // 20+ projects → 20, 3+ years → 3, 100% → 100
+      const targets = [20, 3, 100];
+      const suffixes = ['+', '+', '%'];
+      nums.forEach((el, i) => {
+        const inner = el.querySelector('span');
+        const spanText = inner ? inner.textContent : '';
+        el.textContent = '0';
+        if (inner) { const s = document.createElement('span'); s.textContent = spanText; el.appendChild(s); }
+        animateCount(el, targets[i], suffixes[i]);
+      });
+      heroObs.disconnect();
+    }
+  }, { threshold: .5 });
+  heroObs.observe(heroCard);
+}
+
+/* ─── TEXT SCRAMBLE ON EYEBROWS ─────────────────── */
+const chars = '!<>-_\\/[]{}—=+*^?#ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function scramble(el) {
+  const original = el.textContent;
+  let iter = 0;
+  const interval = setInterval(() => {
+    el.textContent = original.split('').map((c, i) => {
+      if (i < iter) return original[i];
+      return c === ' ' ? ' ' : chars[Math.floor(Math.random()*chars.length)];
+    }).join('');
+    iter += 1/3;
+    if (iter >= original.length) clearInterval(interval);
+  }, 35);
+}
+
+document.querySelectorAll('.eyebrow').forEach(el => {
+  const io2 = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) {
+      // only scramble the first visible text node
+      const span = el.querySelector('.t.active') || el;
+      setTimeout(() => scramble(span), 200);
+      io2.disconnect();
+    }
+  }, { threshold: .8 });
+  io2.observe(el);
+});
+
+/* ─── SMOOTH SECTION HIGHLIGHT NAV ─────────────── */
+// Already handled above, but add glow active state
+const navLinkEls = document.querySelectorAll('.nav-links a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  document.querySelectorAll('section[id]').forEach(s => {
+    if (window.scrollY >= s.offsetTop - 220) current = s.id;
+  });
+  navLinkEls.forEach(a => {
+    const active = a.getAttribute('href') === '#' + current;
+    a.style.color = active ? 'var(--text)' : '';
+    a.style.textShadow = active ? '0 0 20px rgba(124,111,255,0.6)' : '';
+  });
+}, { passive: true });
+
+/* ─── HERO TITLE PERSPECTIVE RESET ──────────────── */
+document.addEventListener('mouseleave', () => {
+  if (heroTitle) heroTitle.style.transform = '';
+});
+
+</script>
+</body>
+</html>
